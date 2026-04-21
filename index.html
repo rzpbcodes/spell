@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Spelling App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; }
+
+    @keyframes pop-in {
+      0%   { transform: scale(0.75); opacity: 0; }
+      100% { transform: scale(1);    opacity: 1; }
+    }
+    .pop-in { animation: pop-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-10px); }
+      40%       { transform: translateX(10px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ===== ADD YOUR LESSONS HERE =====
+    const LESSONS = [
+  {
+    name: "Numbers",
+    words: ["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety","hundred"]
+  },
+  {
+    name: "Colors",
+    words: ["red","blue","green","yellow","pink","black","white","brown","grey","orange","purple","gold","silver","cream","violet","indigo","maroon","turquoise","beige","peach","coral"]
+  },
+  {
+    name: "Shapes",
+    words: ["circle","square","triangle","oval","star","heart","line","cube","cone","cylinder","rectangle","diamond","pentagon","hexagon","octagon","sphere","prism","pyramid","semicircle","parallelogram","trapezium"]
+  },
+  {
+    name: "Days of the Week",
+    words: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+  },
+  {
+    name: "Months of the Year",
+    words: ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  },
+  {
+    name: "Seasons",
+    words: ["summer","winter","spring","autumn","rainy","dry","humid"]
+  },
+  {
+    name: "Daily Routine",
+    words: ["wake","wash","eat","drink","go","come","sit","stand","read","write","play","sleep","rest","study","brush","bathe","dress","clean","help","learn","relax"]
+  },
+  {
+    name: "Action Words",
+    words: ["run","jump","walk","eat","drink","read","write","play","sing","dance","laugh","cry","talk","listen","climb","throw","catch","build","open","close","carry"]
+  },
+  {
+    name: "Family Members",
+    words: ["mother","father","sister","brother","baby","family","parent","uncle","aunt","cousin","grandfather","grandmother","son","daughter"]
+  },
+  {
+    name: "Classroom Objects",
+    words: ["pen","pencil","book","bag","desk","chair","board","chalk","duster","ruler","eraser","sharpener","notebook","marker"]
+  },
+  {
+    name: "Instructions",
+    words: ["sit","stand","read","write","listen","look","come","go","stop","open","close","speak","wait","start"]
+  },
+  {
+    name: "House",
+    words: ["room","door","wall","roof","floor","window","house","kitchen","bedroom","bathroom","garden","balcony","stairs","garage"]
+  },
+  {
+    name: "Household Items",
+    words: ["bed","table","chair","fan","light","sofa","mat","cupboard","pillow","blanket","mirror","carpet","shelf","clock"]
+  },
+  {
+    name: "Personal Items",
+    words: ["bag","shoes","socks","cap","belt","comb","brush","bottle","towel","soap","watch","glasses","umbrella","wallet"]
+  },
+  {
+    name: "Clothes",
+    words: ["shirt","pants","dress","skirt","coat","cap","shoes","socks","sweater","jacket","uniform","scarf","gloves","trousers"]
+  },
+  {
+    name: "Food & Drinks",
+    words: ["rice","bread","milk","tea","egg","apple","water","juice","butter","cheese","meat","fish","soup","sugar"]
+  },
+  {
+    name: "Fruits",
+    words: ["apple","mango","banana","orange","pear","peach","grape","cherry","lemon","melon","guava","papaya","pineapple","strawberry"]
+  },
+  {
+    name: "Vegetables",
+    words: ["potato","onion","tomato","carrot","peas","corn","bean","cabbage","spinach","cucumber","garlic","radish","turnip","pumpkin"]
+  },
+  {
+    name: "Animals",
+    words: ["cat","dog","cow","goat","horse","lion","tiger","elephant","monkey","bear","zebra","camel","deer","fox"]
+  },
+  {
+    name: "Birds",
+    words: ["hen","duck","crow","pigeon","parrot","sparrow","owl","eagle","peacock","swan","crane","falcon","turkey","woodpecker"]
+  },
+  {
+    name: "Weather",
+    words: ["sun","rain","wind","hot","cold","cool","warm","cloudy","storm","fog","snow","thunder","lightning","breeze"]
+  },
+  {
+    name: "Emotions",
+    words: ["happy","sad","angry","glad","afraid","shy","kind","excited","bored","tired","proud","calm","brave","nervous"]
+  },
+  {
+    name: "Opposites",
+    words: ["big","small","hot","cold","fast","slow","up","down","open","close","day","night","old","young","happy","sad","near","far","thick","thin","light"]
+  },
+  {
+    name: "Prepositions",
+    words: ["in","on","under","over","near","far","between","behind","in front","beside","above","below","around","through"]
+  },
+  {
+    name: "Sports",
+    words: ["run","jump","play","ball","bat","goal","race","cricket","football","hockey","tennis","badminton","swimming","cycling"]
+  },
+  {
+    name: "School People",
+    words: ["teacher","student","boy","girl","child","classmate","friend","principal","sir","madam","monitor","leader","helper","staff"]
+  },
+  {
+    name: "Plants & Trees",
+    words: ["plant","tree","leaf","root","stem","seed","grass","flower","branch","fruit","bark","forest","jungle","garden"]
+  },
+  {
+    name: "Simple Adjectives",
+    words: ["big","small","tall","short","fat","thin","old","young","happy","sad","fast","slow","clean","dirty","strong","weak","bright","dark","soft","hard","sweet"]
+  },
+  {
+    name: "Question Words",
+    words: ["who","what","where","when","why","which","how"]
+  },
+  {
+    name: "Indoor Activities",
+    words: ["read","write","draw","color","play","sing","dance","watch","listen","build","paint","study","clean","cook"]
+  },
+  {
+    name: "Outdoor Activities",
+    words: ["run","walk","jump","play","ride","climb","throw","catch","swim","race","hike","cycle","explore","travel"]
+  },
+  {
+    name: "Hobbies",
+    words: ["read","draw","sing","dance","play","write","paint","collect","craft","garden","cook","fish","travel","stitch"]
+  },
+  {
+    name: "Professions",
+    words: ["doctor","teacher","farmer","driver","cook","nurse","guard","police","pilot","engineer","tailor","barber","plumber","artist"]
+  },
+  {
+    name: "Community Helpers",
+    words: ["doctor","teacher","police","farmer","driver","nurse","guard","firefighter","postman","sweeper","cleaner","builder","helper","soldier"]
+  },
+  {
+    name: "Transport",
+    words: ["car","bus","train","bike","van","truck","taxi","ship","boat","airplane","helicopter","cycle","scooter","rickshaw"]
+  },
+  {
+    name: "City Places",
+    words: ["school","park","market","shop","road","bank","mosque","hospital","office","station","library","hotel","restaurant","playground"]
+  },
+  {
+    name: "Natural Places",
+    words: ["land","water","hill","river","lake","sea","forest","mountain","desert","island","valley","ocean","jungle","waterfall"]
+  },
+  {
+    name: "Directions",
+    words: ["left","right","up","down","near","far","here","there","front","back","inside","outside","above","below"]
+  },
+  {
+    name: "Time",
+    words: ["time","clock","day","night","morning","evening","noon","today","tomorrow","yesterday","hour","minute","second","watch"]
+  },
+  {
+    name: "Synonyms",
+    words: ["big-large","small-tiny","fast-quick","slow-lazy","happy-glad","sad-unhappy","smart-clever","begin-start","end-finish","look-see","speak-talk","help-aid","buy-purchase","ask-question"]
+  },
+  {
+    name: "Describing People",
+    words: ["kind","tall","short","fat","thin","strong","weak","brave","smart","clever","honest","polite","friendly","helpful"]
+  },
+  {
+    name: "School Subjects",
+    words: ["math","english","urdu","science","art","music","sport","computer","history","geography","drawing","grammar","reading","writing"]
+  },
+  {
+    name: "School Activities",
+    words: ["read","write","learn","play","draw","sing","speak","listen","answer","ask","discuss","practice","present"]
+  },
+  {
+    name: "Hygiene",
+    words: ["wash","clean","brush","bathe","soap","towel","water","shampoo","comb","neat","tidy","fresh","hygiene","sanitize"]
+  },
+  {
+    name: "Kitchen Items",
+    words: ["cup","plate","spoon","bowl","knife","fork","glass","pan","pot","stove","tray","bottle","kettle","jug"]
+  },
+  {
+    name: "Safety",
+    words: ["stop","go","wait","look","help","danger","safe","careful","warning","alert","protect","emergency","rescue","avoid"]
+  },
+  {
+    name: "Technology",
+    words: ["phone","computer","screen","mouse","keyboard","tablet","tv","internet","video","audio","camera","charger","battery","device"]
+  },
+  {
+    name: "Money",
+    words: ["coin","note","money","buy","sell","pay","save","price","cost","cheap","expensive","change","wallet","rupee"]
+  },
+  {
+    name: "Compound Words",
+    words: ["toothbrush","sunlight","football","classroom","notebook","bedroom","playground","raincoat","blackboard","haircut","teacup","airport","policeman","birthday"]
+  }
+];
+    // ===== END LESSONS =====
+
+    // ---------- storage ----------
+    const STORAGE_KEY = 'spellingApp_v1';
+
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { profiles: [], progress: {} };
+      } catch {
+        return { profiles: [], progress: {} };
+      }
+    }
+
+    function saveData(data) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    // ---------- speech ----------
+    function speak(word) {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(word);
+      utt.rate = 0.85;
+      utt.lang = 'en-US';
+      window.speechSynthesis.speak(utt);
+    }
+
+    // =========================================================
+    // App root
+    // =========================================================
+    function App() {
+      const [screen, setScreen]       = useState('profiles');
+      const [profile, setProfile]     = useState(null);
+      const [lessonIdx, setLessonIdx] = useState(null);
+      const [data, setData]           = useState(loadData);
+
+      function updateData(fn) {
+        setData(prev => {
+          const next = fn(prev);
+          saveData(next);
+          return next;
+        });
+      }
+
+      if (screen === 'profiles') {
+        return (
+          <ProfileSelect
+            data={data}
+            updateData={updateData}
+            onSelect={name => { setProfile(name); setScreen('lessons'); }}
+          />
+        );
+      }
+
+      if (screen === 'lessons') {
+        return (
+          <LessonsList
+            data={data}
+            profile={profile}
+            onSelect={idx => { setLessonIdx(idx); setScreen('lesson'); }}
+            onBack={() => { setProfile(null); setScreen('profiles'); }}
+          />
+        );
+      }
+
+      return (
+        <LessonView
+          lesson={LESSONS[lessonIdx]}
+          lessonKey={`lesson_${lessonIdx}`}
+          profile={profile}
+          data={data}
+          updateData={updateData}
+          onBack={() => { setLessonIdx(null); setScreen('lessons'); }}
+        />
+      );
+    }
+
+    // =========================================================
+    // Profile Select
+    // =========================================================
+    function ProfileSelect({ data, updateData, onSelect }) {
+      const [adding, setAdding] = useState(false);
+      const [newName, setNewName] = useState('');
+      const inputRef = useRef(null);
+
+      useEffect(() => {
+        if (adding) inputRef.current?.focus();
+      }, [adding]);
+
+      function addProfile() {
+        const name = newName.trim();
+        if (!name || data.profiles.includes(name)) return;
+        updateData(d => ({ ...d, profiles: [...d.profiles, name] }));
+        setNewName('');
+        setAdding(false);
+      }
+
+      function deleteProfile(name) {
+        updateData(d => {
+          const { [name]: _, ...restProgress } = d.progress;
+          return { profiles: d.profiles.filter(p => p !== name), progress: restProgress };
+        });
+      }
+
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-slate-100 flex flex-col items-center justify-center p-6">
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold text-indigo-700 mb-1">📚 Spelling</h1>
+            <p className="text-slate-500 text-lg">Who's practicing today?</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+            {data.profiles.map(name => (
+              <div key={name} className="relative">
+                <button
+                  onClick={() => onSelect(name)}
+                  className="w-full bg-white rounded-2xl shadow border border-slate-200 py-7 px-2 text-xl font-bold text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 active:scale-95 transition-all"
+                >
+                  {name}
+                </button>
+                <button
+                  onClick={() => deleteProfile(name)}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-rose-400 hover:bg-rose-500 text-white rounded-full text-sm flex items-center justify-center shadow transition-colors"
+                  aria-label={`Delete ${name}`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {adding ? (
+            <div className="flex gap-2 w-full max-w-xs">
+              <input
+                ref={inputRef}
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') addProfile();
+                  if (e.key === 'Escape') { setAdding(false); setNewName(''); }
+                }}
+                placeholder="Enter name…"
+                maxLength={20}
+                className="flex-1 border-2 border-slate-300 focus:border-indigo-400 rounded-xl px-4 py-3 text-lg outline-none"
+              />
+              <button
+                onClick={addProfile}
+                className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl px-4 font-bold transition-colors"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => { setAdding(false); setNewName(''); }}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-xl px-3 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAdding(true)}
+              className="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-2xl px-8 py-3 text-lg font-semibold shadow transition-all"
+            >
+              + Add New
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Lessons List
+    // =========================================================
+    function LessonsList({ data, profile, onSelect, onBack }) {
+      const progress = data.progress[profile] || {};
+
+      return (
+        <div className="min-h-screen bg-slate-100 flex flex-col">
+          <div className="bg-white border-b border-slate-200 px-4 py-4 flex items-center gap-3">
+            <button onClick={onBack} className="text-slate-400 hover:text-slate-700 text-2xl w-8">←</button>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">{profile}</h2>
+              <p className="text-sm text-slate-400">Choose a lesson</p>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-3 max-w-md mx-auto w-full">
+            {LESSONS.map((lesson, idx) => {
+              const key = `lesson_${idx}`;
+              const prog = progress[key];
+              return (
+                <button
+                  key={idx}
+                  onClick={() => onSelect(idx)}
+                  className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 px-5 py-4 flex items-center justify-between hover:bg-indigo-50 hover:border-indigo-200 active:scale-[0.98] transition-all"
+                >
+                  <div className="text-left">
+                    <div className="text-lg font-semibold text-slate-700">{lesson.name}</div>
+                    <div className="text-sm text-slate-400">{lesson.words.length} words</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {prog?.completed && (
+                      <span className="text-sm font-medium text-emerald-600">{prog.score}</span>
+                    )}
+                    {prog?.completed && <span>✅</span>}
+                    <span className="text-slate-300 text-xl">›</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Lesson View (tab shell)
+    // =========================================================
+    function LessonView({ lesson, lessonKey, profile, data, updateData, onBack }) {
+      const [tab, setTab] = useState('practice');
+
+      return (
+        <div className="min-h-screen bg-slate-100 flex flex-col max-w-lg mx-auto">
+          <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+            <button onClick={onBack} className="text-slate-400 hover:text-slate-700 text-2xl w-8">←</button>
+            <h2 className="text-lg font-bold text-slate-800 flex-1">{lesson.name}</h2>
+          </div>
+
+          <div className="bg-white border-b border-slate-200 flex">
+            {['practice', 'dictate', 'type'].map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-1 py-3 text-sm font-semibold capitalize transition-colors border-b-2 ${
+                  tab === t
+                    ? 'text-indigo-600 border-indigo-500'
+                    : 'text-slate-400 border-transparent hover:text-slate-600'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            {tab === 'practice' && <PracticeTab key="practice" words={lesson.words} />}
+            {tab === 'dictate'  && <DictateTab  key="dictate"  words={lesson.words} />}
+            {tab === 'type'     && (
+              <TypeTab
+                key="type"
+                words={lesson.words}
+                lessonKey={lessonKey}
+                profile={profile}
+                updateData={updateData}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Practice Tab
+    // =========================================================
+    function PracticeTab({ words }) {
+      const [idx, setIdx] = useState(0);
+
+      useEffect(() => { speak(words[idx]); }, [idx]);
+
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+          <p className="text-slate-400 text-sm font-medium">{idx + 1} / {words.length}</p>
+
+          <div className="bg-white rounded-3xl shadow-md border border-slate-200 w-full max-w-xs flex flex-col items-center py-12 px-8 gap-6">
+            <div className="text-5xl font-bold text-slate-800 tracking-wide text-center break-all">
+              {words[idx]}
+            </div>
+            <button
+              onClick={() => speak(words[idx])}
+              className="w-14 h-14 bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 rounded-full flex items-center justify-center text-2xl transition-colors"
+              aria-label="Hear the word"
+            >
+              🔊
+            </button>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => setIdx(i => i - 1)}
+              disabled={idx === 0}
+              className="w-14 h-14 bg-white border border-slate-200 rounded-full text-xl font-bold text-slate-500 disabled:opacity-25 hover:bg-slate-50 shadow-sm active:scale-95 transition-all"
+            >
+              ◀
+            </button>
+            <button
+              onClick={() => setIdx(i => i + 1)}
+              disabled={idx === words.length - 1}
+              className="w-14 h-14 bg-white border border-slate-200 rounded-full text-xl font-bold text-slate-500 disabled:opacity-25 hover:bg-slate-50 shadow-sm active:scale-95 transition-all"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Dictate Tab
+    // =========================================================
+    function DictateTab({ words }) {
+      const [idx, setIdx] = useState(0);
+      const [done, setDone] = useState(false);
+
+      useEffect(() => { speak(words[idx]); }, [idx]);
+
+      function advance() {
+        if (idx < words.length - 1) setIdx(i => i + 1);
+        else setDone(true);
+      }
+
+      if (done) {
+        return (
+          <div className="flex-1 flex flex-col items-center p-6">
+            <h3 className="text-2xl font-bold text-slate-700 mt-4 mb-1">All Done!</h3>
+            <p className="text-slate-500 text-center mb-6">
+              Check these words against what was written on paper:
+            </p>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 w-full max-w-xs p-4 mb-6">
+              {words.map((w, i) => (
+                <div
+                  key={i}
+                  className={`py-2.5 flex gap-3 items-center ${i < words.length - 1 ? 'border-b border-slate-100' : ''}`}
+                >
+                  <span className="text-slate-400 text-sm w-6 text-right shrink-0">{i + 1}.</span>
+                  <span className="text-xl font-semibold text-slate-700">{w}</span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => { setIdx(0); setDone(false); }}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-8 py-3 font-semibold transition-colors"
+            >
+              Start Over
+            </button>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-8">
+          <p className="text-slate-400 text-sm font-medium">Word {idx + 1} of {words.length}</p>
+
+          <div className="bg-white rounded-3xl shadow-md border border-slate-200 w-full max-w-xs flex flex-col items-center py-12 px-8 gap-6">
+            <p className="text-slate-400 text-base">Listen and write it down</p>
+            <button
+              onClick={() => speak(words[idx])}
+              className="w-16 h-16 bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 rounded-full flex items-center justify-center text-3xl transition-colors shadow-sm"
+              aria-label="Hear the word"
+            >
+              🔊
+            </button>
+          </div>
+
+          <button
+            onClick={advance}
+            className="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-2xl px-10 py-3 text-lg font-semibold shadow-sm transition-all"
+          >
+            {idx < words.length - 1 ? 'Next ▶' : 'Finish ✓'}
+          </button>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Type Tab
+    // =========================================================
+    function TypeTab({ words, lessonKey, profile, updateData }) {
+      const [idx, setIdx]           = useState(0);
+      const [input, setInput]       = useState('');
+      const [submitted, setSubmitted] = useState(false);
+      const [correct, setCorrect]   = useState(null);
+      const [done, setDone]         = useState(false);
+      const [finalScore, setFinalScore] = useState('');
+      const [shakeKey, setShakeKey] = useState(0);
+      const scoreRef  = useRef(0);
+      const inputRef  = useRef(null);
+
+      useEffect(() => {
+        speak(words[idx]);
+        inputRef.current?.focus();
+      }, [idx]);
+
+      function submit() {
+        if (!input.trim() || submitted) return;
+        const isCorrect = input.trim().toLowerCase() === words[idx].toLowerCase();
+        if (isCorrect) scoreRef.current += 1;
+        else setShakeKey(k => k + 1);
+        setCorrect(isCorrect);
+        setSubmitted(true);
+      }
+
+      function next() {
+        if (idx < words.length - 1) {
+          setIdx(i => i + 1);
+          setInput('');
+          setSubmitted(false);
+          setCorrect(null);
+        } else {
+          const sc  = scoreRef.current;
+          const tot = words.length;
+          const scoreStr = `${sc}/${tot}`;
+          setFinalScore(scoreStr);
+          setDone(true);
+          updateData(d => ({
+            ...d,
+            progress: {
+              ...d.progress,
+              [profile]: {
+                ...d.progress[profile],
+                [lessonKey]: { completed: true, score: scoreStr }
+              }
+            }
+          }));
+        }
+      }
+
+      function restart() {
+        scoreRef.current = 0;
+        setIdx(0);
+        setInput('');
+        setSubmitted(false);
+        setCorrect(null);
+        setDone(false);
+        setFinalScore('');
+      }
+
+      if (done) {
+        const [sc, tot] = finalScore.split('/').map(Number);
+        const pct = sc / tot;
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
+            <div className="text-7xl mb-2">
+              {pct === 1 ? '🎉' : pct >= 0.7 ? '👍' : '💪'}
+            </div>
+            <h3 className="text-3xl font-bold text-slate-800">
+              {sc} out of {tot}
+            </h3>
+            <p className="text-slate-500 text-lg">
+              {pct === 1
+                ? 'Perfect score! Amazing!'
+                : pct >= 0.7
+                ? 'Great job!'
+                : "Keep practicing, you'll get there!"}
+            </p>
+            <button
+              onClick={restart}
+              className="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-10 py-3 text-lg font-semibold transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        );
+      }
+
+      const cardBorder = submitted
+        ? correct ? 'border-emerald-400' : 'border-red-400'
+        : 'border-slate-200';
+      const cardBg = submitted
+        ? correct ? 'bg-emerald-50' : 'bg-red-50'
+        : 'bg-white';
+
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
+          <p className="text-slate-400 text-sm font-medium">{idx + 1} / {words.length}</p>
+
+          <div
+            key={shakeKey}
+            className={`rounded-3xl shadow-md border-2 w-full max-w-xs flex flex-col items-center py-8 px-6 gap-4 transition-colors ${cardBorder} ${cardBg} ${submitted && !correct ? 'shake' : ''}`}
+          >
+            <button
+              onClick={() => speak(words[idx])}
+              className="w-14 h-14 bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 rounded-full flex items-center justify-center text-2xl transition-colors"
+              aria-label="Hear the word"
+            >
+              🔊
+            </button>
+
+            {submitted && (
+              <div className="text-center pop-in">
+                {correct ? (
+                  <div className="text-emerald-600 font-bold text-2xl">✓ Correct!</div>
+                ) : (
+                  <div>
+                    <div className="text-red-500 font-semibold text-lg mb-1">✗ Not quite</div>
+                    <div className="text-3xl font-bold text-slate-700">{words[idx]}</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {!submitted ? (
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+                placeholder="Type the word…"
+                className="border-2 border-slate-300 focus:border-indigo-400 rounded-2xl px-4 py-3 text-2xl text-center outline-none transition-colors"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+              />
+              <button
+                onClick={submit}
+                disabled={!input.trim()}
+                className="bg-indigo-500 hover:bg-indigo-600 disabled:opacity-40 text-white rounded-2xl py-3 text-lg font-semibold active:scale-[0.98] transition-all"
+              >
+                Check ✓
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={next}
+              className="bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white rounded-2xl px-10 py-3 text-lg font-semibold shadow-sm transition-all"
+            >
+              {idx < words.length - 1 ? 'Next ▶' : 'See Results'}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // =========================================================
+    // Mount
+    // =========================================================
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
